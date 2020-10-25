@@ -9,7 +9,7 @@ import wikipedia
 import nltk
 from sys import platform
 import sys
-sys.path.append('Chatbot')
+sys.path.append('Wikipedia Chatbot')
 
 stringToSpeak = None
 
@@ -127,7 +127,7 @@ EntryBox.place(x=68, y=740, height=55, width=810)
 EntryBox.bind("<Key>", entryFocusInHandler)
 
 # clear_button for clearing all the entries of the ChatBox.
-clear_button_image = Image.open("Chatbot/images/clear.png")
+clear_button_image = Image.open("Wikipedia Chatbot/images/clear.png")
 clear_button_image = clear_button_image.resize((50, 47), Image.ANTIALIAS)
 clear_button_image = ImageTk.PhotoImage(clear_button_image)
 clear_button = Button(root, image=clear_button_image, bg="white",
@@ -135,7 +135,7 @@ clear_button = Button(root, image=clear_button_image, bg="white",
 clear_button.place(x=8, y=740)
 
 # mic_button for getting user speech.
-mic_button_image = Image.open("Chatbot/images/mic.png")
+mic_button_image = Image.open("Wikipedia Chatbot/images/mic.png")
 mic_button_image = mic_button_image.resize((50, 47), Image.ANTIALIAS)
 mic_button_image = ImageTk.PhotoImage(mic_button_image)
 mic_button = Button(root, image=mic_button_image, bg="white",
@@ -145,7 +145,7 @@ mic_button.bind('')
 
 
 # send_button for giving user input for evaluation.
-send_button_image = Image.open("Chatbot/images/send.png")
+send_button_image = Image.open("Wikipedia Chatbot/images/send.png")
 send_button_image = send_button_image.resize((50, 47), Image.ANTIALIAS)
 send_button_image = ImageTk.PhotoImage(send_button_image)
 send_button = Button(root, image=send_button_image, bg="white",
@@ -232,7 +232,7 @@ def historyTab():
     def exportChats():
         time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         textFile = open(
-            "Chatbot/Histories/chatHistories({}).txt".format(time), 'w')
+            "Wikipedia Chatbot/Histories/chatHistories({}).txt".format(time), 'w')
         mycursor.execute(
             """ select * from MsgStore """)
         messages = mycursor.fetchall()
@@ -269,7 +269,7 @@ def historyTab():
 # exports chats to a file appended with current time. (Invokes when 'exports chats' invokes in menubar of root.)
 def exportChats():
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    textFile = open("Chatbot/Chats/chats({}).txt".format(time), 'w')
+    textFile = open("Wikipedia Chatbot/Chats/chats({}).txt".format(time), 'w')
     mycursor.execute(
         """ select * from MsgStore """)
     messages = mycursor.fetchall()
