@@ -7,7 +7,6 @@ import mysql.connector as mycon
 from datetime import datetime
 import wikipedia
 import nltk
-# import pyttsx3
 from sys import platform
 import sys
 sys.path.append('Chatbot')
