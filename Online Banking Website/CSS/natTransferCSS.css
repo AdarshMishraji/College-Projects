@@ -1,0 +1,9 @@
+@import url("../CSS/homeCSS.css");
+#nat{
+    background-image: url("../Images/natMoney.jpg");
+    height:500px;
+    width:700px;
+    background-size:700px 500px;
+    border-radius:30px;
+    margin:30px auto;
+}

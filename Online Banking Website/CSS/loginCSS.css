@@ -1,0 +1,60 @@
+@import url("../CSS/homeCSS.css");
+fieldset{
+    border-radius:25px;
+    padding:30px;
+    background:linear-gradient(90deg, lightblue, purple);
+    text-align: center;
+    width:750px;
+    box-shadow:5px 10px 2px 5px;
+    margin:50px auto;
+}
+legend{
+    text-transform: uppercase;
+    font-weight:bolder;
+    font-size: 30px;
+    text-align: end;
+    border-radius:20px;
+    border:3px solid black;
+    background-color:greenyellow;
+    padding:10px
+}
+input{
+    height:50px;
+    border-radius:20px;
+    padding:30px;
+    font-size:30px;
+    font-weight:bolder;
+    margin:10px;
+    width: 70%;
+}
+input:focus{
+    border:2px solid blue;
+}
+form p{
+    font-size:30px;
+    margin:0px;
+    text-decoration: underline;
+}
+button{
+    height:50px;
+    padding:10px;
+    border-radius:20px;
+    border-style: outset;
+    margin:5px 30px;
+    font-size: 20px;
+    font-weight: bolder;
+}
+#result{
+    font-size:10px;
+    color:red;
+    font-style:oblique;
+}
+
+#accno:invalid{
+    border:2px solid red;
+}
+input[type="email"]:invalid{
+    border:2px solid red;
+}
+
+

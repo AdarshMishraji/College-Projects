@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Personal Internet Banking | Online Banking Website</title>
+        <link href="../CSS/perIntBankCSS.css" rel="stylesheet">
+        <script src="../Java Script/perIntBankJS.js"></script>
+    </head>
+
+    <body onload="load();">
+        <div id="header">
+            <h1>Online Banking Website</h1>
+            <a href="home.html"><img src="..//Images//logo.png" alt="Online Banking Website"
+                    title="Online Banking Website"></a>
+        </div>
+        <div id="menu">
+            <h1>Personal Internet Banking</h1>
+            <form method="POST">
+                <input type="text" name="accno" id="accno" size="16"
+                    placeholder="Enter the Account Number of the Reciever:"><br />
+                <input type="number" min="0" max="20000" name="amnt" id="amnt"
+                    placeholder="Enter the amount to send:"><br />
+                <p id="error"></p>
+                <button type="button" id="submitbtn" onclick="goto();">Submit</button>
+            </form>
+        </div>
+    </body>
+
+</html>

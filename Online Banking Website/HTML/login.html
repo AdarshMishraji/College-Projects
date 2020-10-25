@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Login | Online Banking Website</title>
+        <link href="../CSS/loginCSS.css" rel="stylesheet">
+        <script src="../Java Script/loginJS.js"></script>
+    </head>
+
+    <body onload="load();">
+        <div id="header">
+            <h1>Online Banking Website</h1>
+            <a href="home.html"><img src="..//Images//logo.png" alt="Online Banking Website"
+                    title="Online Banking Website"></a>
+        </div>
+        <form method="POST">
+            <fieldset>
+                <legend>Login</legend>
+                <input type="email" placeholder="Enter your Email Address:" id="email"><br />
+                <p>OR</p>
+                <input type="text" placeholder="Enter your Account Number:" id="accno"><br />
+                <input type="password" accept="number" placeholder="Enter your Password:" id="password"
+                    onblur="return validForm();"><br />
+                <p id="result"></p>
+                <button type="button" id="loginbtn" value="0" onclick="goto();">Login In</button>
+                <button type="reset" id="resetbtn">Reset</button>
+            </fieldset>
+        </form>
+    </body>
+
+</html>

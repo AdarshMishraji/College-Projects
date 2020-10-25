@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bill Payment | Online Banking Website</title>
+        <script src="../Java Script/billPayJS.js"></script>
+        <link rel="stylesheet" href="../CSS/billPayCSS.css">
+    </head>
+
+    <body>
+        <div id="header">
+            <h1>Online Banking Website</h1>
+            <a href="home.html"><img src="../Images/logo.png" alt="Online Banking System"
+                    title="Online Banking Website"></a>
+        </div>
+
+        <div>
+            <h1>Bill Payment</h1>
+            <form action="" method="POST">
+                <fieldset>
+                    <label>Which Type of bill payment:</label>
+                    <select name="type">
+                        <div>
+                            <option value="Electricity">Electricity</option>
+                            <option value="Water">Water</option>
+                            <option value="Gas">Gas</option>
+                        </div>
+                    </select><br />
+                    <input type="text" size="16" id="billno" placeholder="Ente the Bill / Account No.:"><br />
+                    <input type="number" id="rupee" placeholder="Enter the rupees to pay:" min="1" max="20000"><br />
+                    <p id="error"></p>
+                    <button type="button" id="paybtn" onclick="goto();">Pay</button>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+
+</html>

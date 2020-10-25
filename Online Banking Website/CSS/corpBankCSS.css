@@ -1,0 +1,10 @@
+@import url("../CSS/homeCSS.css");
+#corp{
+    background-image: url("../Images/corporate.jpg");
+    background-size: 500px 500px;
+    overflow: auto;
+    margin:30px auto;
+    border-radius:20px;
+    height:500px;
+    width:500px;
+}

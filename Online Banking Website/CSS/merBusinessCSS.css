@@ -1,0 +1,9 @@
+@import url("../CSS/homeCSS.css");
+#mer{
+    background-image: url("../Images/merchant.jpg");
+    height:500px;
+    width:800px;
+    border-radius:30px;
+    background-size:800px 500px;
+    margin:30px auto;
+}

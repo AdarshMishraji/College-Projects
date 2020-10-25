@@ -1,0 +1,41 @@
+@import url("homeCSS.css");
+fieldset{
+    width: 500px;
+    border-radius:25px;
+    margin:100px auto;
+    text-align: center;
+    border:2px ridge;
+}
+label{
+    font-size:20px;
+
+}
+select{    
+    height: 40px;
+    width:140px;
+    font-size:20px;
+    border-radius:30px;
+}
+input{
+    width:500px;
+}
+option{
+    padding:30px;
+    border-radius: 30px;
+    background-color:black;
+    color:white;
+}
+
+button{
+    height:50px;
+    width:100px;
+    border-radius:30px;
+    border-style: outset;
+    font-size:30px;
+}
+input:focus{
+    border:2px solid blue;
+}
+input[type="number"]:out-of-range{
+    border:2px solid red;
+}

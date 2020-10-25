@@ -1,0 +1,10 @@
+@import url("homeCSS.css");
+
+#eserv{
+    background-image: url("../Images/e-services.jpg");
+    height:500px;
+    width:500px;
+    background-size: 500px 500px;
+    margin: 20px auto;
+    border-radius: 30px;
+}
