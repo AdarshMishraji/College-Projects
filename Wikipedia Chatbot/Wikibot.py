@@ -89,7 +89,7 @@ def sendButtonListener(event=None):
 
 # establish mysql connection.
 msg_db = mycon.connect(user="root", password="********",
-                       database="msg_db", host="localhost")
+                       database="msg_db", host="localhost") # enter your password to access it.
 mycursor = msg_db.cursor()
 
 root = tkinter.Tk()
