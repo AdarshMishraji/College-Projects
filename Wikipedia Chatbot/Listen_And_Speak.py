@@ -1,29 +1,15 @@
-import pyttsx3
-import datetime
-import speech_recognition
+import pyttsx3  # for text to speech
+import speech_recognition # for speech recognition.
 
 
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 
-def speak(string):
+def speak(string): # convert string to voice. (Text-to-Speech)
     engine.say(string)
     engine.runAndWait()
 
-def initialGreetings():
-    hour=datetime.datetime.now().hour
-    if hour>=0 and hour<12:
-        speak("Hello,Good Morning")
-        print("Hello,Good Morning")
-    elif hour>=12 and hour<18:
-        speak("Hello,Good Afternoon")
-        print("Hello,Good Afternoon")
-    else:
-        speak("Hello,Good Evening")
-        print("Hello,Good Evening")
-
-def takeUserSpeech():
-
+def takeUserSpeech(): # takes user speech and convert it to string (Speech-to-Text)
     userSpeech = speech_recognition.Recognizer()
     with speech_recognition.Microphone() as audio_source:
         userSpeech.adjust_for_ambient_noise(audio_source)
@@ -40,4 +26,4 @@ def takeUserSpeech():
             return
     return userSpeech
 
-engine.setProperty('rate', 150)
+engine.setProperty('rate', 125)

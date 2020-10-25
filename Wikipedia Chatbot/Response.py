@@ -1,9 +1,9 @@
 import wikipedia
-import requests
+import requests.exceptions as reqExcep
 import nltk
 
 
-def secureResponse(string):
+def secureResponse(string): # modifies the response
     resultantString = string.replace('"', "")
     try:
         startIndex = resultantString.index('[')
@@ -16,7 +16,7 @@ def secureResponse(string):
     return resultantString
 
 
-def getResponse(input):
+def getResponse(input): # provides response for given input.
     def isNoun(pos):
         return True if pos[:1] == 'N' else False
 
@@ -42,7 +42,7 @@ def getResponse(input):
         except wikipedia.exceptions.DisambiguationError:
             errorMsg = "Sorry!, I'am not having any result for this query. Please change your query or try some different keyword(s)."
             response = errorMsg
-        except requests.exceptions.ConnectionError:
+        except reqExcep.ConnectionError:
             errorMsg = "Sorry! I am not able to fetch data for you. Please try to connect to a stable internet connection."
             response = errorMsg
         except Exception:
