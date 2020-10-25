@@ -88,7 +88,7 @@ def sendButtonListener(event=None):
 
 
 # establish mysql connection.
-msg_db = mycon.connect(user="root", password="Nursinha.01",
+msg_db = mycon.connect(user="root", password="********",
                        database="msg_db", host="localhost")
 mycursor = msg_db.cursor()
 
