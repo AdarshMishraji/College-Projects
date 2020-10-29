@@ -9,31 +9,16 @@ import wikipedia
 import nltk
 from sys import platform
 import sys
-sys.path.append('Wikipedia Chatbot')
+sys.path.append('Project/Wikipedia Chatbot')
 
 stringToSpeak = None
 
 
 # inserts the given parameter to the database.
 def insertIntoDatabase(table, sender, message):
-    mycursor.execute("""insert into {} (date, sender, message) value(now(), "{}", "{}")""".format(
+    mycursor.execute("""insert into {} (date, sender, message) value(now(3), "{}", "{}")""".format(
         table, sender, message))
     msg_db.commit()
-
-
-# display all the messages for the first time.
-def showMessages(): 
-    mycursor.execute(
-        """ select sender, message from MsgStore """)
-    messages = mycursor.fetchall()
-    for message in messages:
-        if message[0] == "me":
-            ChatBox.insert("end", "You: " + message[1])
-            ChatBox.itemconfig('end', {'fg': 'blue'})
-        elif message[0] == 'bot':
-            ChatBox.insert("end", "Bot: " + message[1])
-            ChatBox.itemconfig('end', {'fg': 'green'})
-    ChatBox.config(foreground="#446665", font=("Verdana", 12))
 
 
 # deletes all the entries of ChatBox. (Invokes when clearButton invokes).
@@ -83,13 +68,14 @@ def sendButtonListener(event=None):
     insertIntoDatabase("MsgStoreHistory", "me", userInput)
     insertIntoDatabase("MsgStore", "bot", f"""{response}""")
     insertIntoDatabase("MsgStoreHistory", "bot", f"""{response}""")
+    EntryBox.delete(0, 'end')
     global stringToSpeak
     stringToSpeak = response
 
 
 # establish mysql connection.
-msg_db = mycon.connect(user="root", password="********",
-                       database="msg_db", host="localhost") # enter your password to access it.
+msg_db = mycon.connect(user="root", password="Nursinha.01",
+                       database="msg_db", host="localhost") # enter your database name and password to access it.
 mycursor = msg_db.cursor()
 
 root = tkinter.Tk()
@@ -102,10 +88,14 @@ ChatBox = Listbox(root, height=35, width=96,
                   foreground="#446665", font=("Verdana", 12), borderwidth=5)
 ChatBox.place(x=5, y=5)
 
+# for the initial purpose.
 initialMsg = "Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?"
+mycursor.execute("""delete from MsgStore""")
+msg_db.commit()
+ChatBox.insert("end", "Bot: " + initialMsg)
+ChatBox.itemconfig('end', {'fg': 'green'})
 insertIntoDatabase("MsgStore", "bot", initialMsg)
 insertIntoDatabase("MsgStoreHistory", "bot", initialMsg)
-showMessages()  # for the initial purpose.
 
 # scrollbars for ChatBox.
 scrollbary = Scrollbar(root, command=ChatBox.yview)
@@ -127,7 +117,7 @@ EntryBox.place(x=68, y=740, height=55, width=810)
 EntryBox.bind("<Key>", entryFocusInHandler)
 
 # clear_button for clearing all the entries of the ChatBox.
-clear_button_image = Image.open("Wikipedia Chatbot/images/clear.png")
+clear_button_image = Image.open("Project/Wikipedia Chatbot/images/clear.png")
 clear_button_image = clear_button_image.resize((50, 47), Image.ANTIALIAS)
 clear_button_image = ImageTk.PhotoImage(clear_button_image)
 clear_button = Button(root, image=clear_button_image, bg="white",
@@ -135,7 +125,7 @@ clear_button = Button(root, image=clear_button_image, bg="white",
 clear_button.place(x=8, y=740)
 
 # mic_button for getting user speech.
-mic_button_image = Image.open("Wikipedia Chatbot/images/mic.png")
+mic_button_image = Image.open("Project/Wikipedia Chatbot/images/mic.png")
 mic_button_image = mic_button_image.resize((50, 47), Image.ANTIALIAS)
 mic_button_image = ImageTk.PhotoImage(mic_button_image)
 mic_button = Button(root, image=mic_button_image, bg="white",
@@ -145,7 +135,7 @@ mic_button.bind('')
 
 
 # send_button for giving user input for evaluation.
-send_button_image = Image.open("Wikipedia Chatbot/images/send.png")
+send_button_image = Image.open("Project/Wikipedia Chatbot/images/send.png")
 send_button_image = send_button_image.resize((50, 47), Image.ANTIALIAS)
 send_button_image = ImageTk.PhotoImage(send_button_image)
 send_button = Button(root, image=send_button_image, bg="white",
@@ -232,9 +222,9 @@ def historyTab():
     def exportChats():
         time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         textFile = open(
-            "Wikipedia Chatbot/Histories/chatHistories({}).txt".format(time), 'w')
+            "Project/Wikipedia Chatbot/Histories/chatHistories({}).txt".format(time), 'w')
         mycursor.execute(
-            """ select * from MsgStore """)
+            """ select * from MsgStoreHistory """)
         messages = mycursor.fetchall()
         for message in messages:
             if message[1] == "me":
@@ -269,7 +259,7 @@ def historyTab():
 # exports chats to a file appended with current time. (Invokes when 'exports chats' invokes in menubar of root.)
 def exportChats():
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    textFile = open("Wikipedia Chatbot/Chats/chats({}).txt".format(time), 'w')
+    textFile = open("Project/Wikipedia Chatbot/Chats/chats({}).txt".format(time), 'w')
     mycursor.execute(
         """ select * from MsgStore """)
     messages = mycursor.fetchall()
