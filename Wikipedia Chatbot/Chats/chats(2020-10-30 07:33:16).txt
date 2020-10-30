@@ -1,0 +1,3 @@
+2020-10-30 07:32:11.304 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-30 07:32:25.788 => You:tell me about LPU
+2020-10-30 07:32:26.144 => Bot:Lovely Professional University (LPU) is a private university situated in Phagwara, Punjab, India. The university was established in 2005 by Lovely International Trust, under The Lovely Professional University Act, 2005 (Punjab Act 25 of 2005) and started operation in 2006.

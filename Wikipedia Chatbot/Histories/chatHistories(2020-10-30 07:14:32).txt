@@ -1,0 +1,14 @@
+2020-10-29 23:56:02.569 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-29 23:56:07.602 => You:hi
+2020-10-29 23:56:07.816 => Bot:Hello.
+2020-10-29 23:56:11.506 => You:hello
+2020-10-29 23:56:11.691 => Bot:Hello.
+2020-10-29 23:56:13.920 => You:bye
+2020-10-29 23:56:14.258 => Bot:Thank You for interacting with me. It is a good conversation with you.
+2020-10-29 23:56:58.918 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-29 23:59:20.389 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-29 23:59:50.858 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-30 00:11:08.197 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-30 00:11:51.606 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-30 06:59:19.694 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?
+2020-10-30 07:13:59.241 => Bot:Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?

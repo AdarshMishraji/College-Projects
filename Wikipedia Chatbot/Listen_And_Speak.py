@@ -15,7 +15,7 @@ def takeUserSpeech(): # takes user speech and convert it to string (Speech-to-Te
         userSpeech.adjust_for_ambient_noise(audio_source)
         speak("I'am Listening")
         print("I'am Listening...")
-        userSpeech.pause_threshold = 1
+        userSpeech.pause_threshold = 2
         audio = userSpeech.listen(audio_source, phrase_time_limit = 4)
 
         try:
