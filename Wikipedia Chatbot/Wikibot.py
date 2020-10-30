@@ -13,7 +13,7 @@ import sys
 sys.path.append('Project/Wikipedia Chatbot')
 
 # establish mysql connection.
-msg_db = mycon.connect(user="root", password="Nursinha.01",
+msg_db = mycon.connect(user="####", password="********",
                        database="msg_db", host="localhost")  # enter your database name and password to access it.
 mycursor = msg_db.cursor()
 
