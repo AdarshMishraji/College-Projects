@@ -5,11 +5,13 @@ import speech_recognition # for speech recognition.
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 
-def speak(string): # convert string to voice. (Text-to-Speech)
+# convert string to voice. (Text-to-Speech)
+def speak(string): 
     engine.say(string)
     engine.runAndWait()
 
-def takeUserSpeech(): # takes user speech and convert it to string (Speech-to-Text)
+# takes user speech and convert it to string (Speech-to-Text)
+def takeUserSpeech(): 
     userSpeech = speech_recognition.Recognizer()
     with speech_recognition.Microphone() as audio_source:
         userSpeech.adjust_for_ambient_noise(audio_source)

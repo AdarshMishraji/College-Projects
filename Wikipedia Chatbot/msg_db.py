@@ -1,7 +1,7 @@
 import mysql.connector as mycon
 from datetime import datetime
 
-database = mycon.connect(user = "root", password = "Nursinha.01", host = "localhost", database = "msg_db") # provide your password.
+database = mycon.connect(user = "ENTER YOUR USERNAME", password = "ENTER YOUR PASSWORD", host = "localhost", database = "ENTER YOUR DATABASE NAME") # provide your user and password along with a database
 cursor = database.cursor()
 
 cursor.execute("""
@@ -16,7 +16,7 @@ cursor.execute("""
 cursor.execute("""
                     create table MsgStoreHistory(
 	                        date varchar(25), 
-	                        sender varchar(50) default "me",
+	                        sender varchar(50),
 	                        message varchar(1000)
                     )
                 """) # this table is used for storing all chats (History).
@@ -24,7 +24,7 @@ cursor.execute("""
 cursor.execute("""
                     create table MsgStore(
 	                        date varchar(25), 
-	                        sender varchar(50) default "me",
+	                        sender varchar(50),
 	                        message varchar(1000)
                     )
                 """) # this table is used for storing the messages for ChatBox widget.
