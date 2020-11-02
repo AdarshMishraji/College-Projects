@@ -17,25 +17,24 @@ def secureResponse(string): # modifies the response
 
 
 def getResponse(input): # provides response for given input.
+    response = None
+    tokenized = nltk.word_tokenize(input.lower())
     def isNoun(pos):
         return True if pos[:1] == 'N' else False
 
-    if 'Hi' in input or 'hello' in input or 'hi' in input or 'hello' in input:
+    if 'Hi' in tokenized or 'hello' in tokenized or 'hi' in tokenized or 'hello' in tokenized:
         greetingMsg = 'Hello.'
-        return greetingMsg
-    elif "thank you" in input or "Thank you" in input:
+        return greetingMsg 
+    elif "thank you" in input or "Thank you" in input or "thanks" in tokenized or "Thanks" in tokenized:
         welcomeMSg = "Your Welcome."
         return welcomeMSg
 
-    elif "bye" in input or "Bye" in input:
+    elif "bye" in tokenized or "Bye" in tokenized:
         endingMsg = "Thank You for interacting with me. It is a good conversation with you."
         return endingMsg
 
     else:
-        response = None
-        tokenized = nltk.word_tokenize(input.lower())
-        nouns = [word for (word, pos) in nltk.pos_tag(
-            tokenized) if isNoun(pos)]
+        nouns = [word for (word, pos) in nltk.pos_tag(tokenized) if isNoun(pos)]
         try:
             response = wikipedia.summary(" ".join(nouns), sentences=2)
             response = secureResponse(response)

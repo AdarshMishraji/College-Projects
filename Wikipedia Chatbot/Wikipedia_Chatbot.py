@@ -11,16 +11,17 @@ import wikipedia
 import nltk
 from sys import platform
 import sys
+import re 
 sys.path.append('Project/Wikipedia Chatbot')
 
 # establish mysql connection. (BEFORE RUNNING THIS FILE. PLEASE RUN "msg_db.py" FILE)
-msg_db = mycon.connect(user="ENTER YOUR USERNAME", password="ENTER YOUR PASSWORD",
-                       database="ENTER YOUR DATABASE NAME", host="localhost")  # enter your database name and password to access it.
+msg_db = mycon.connect(user="ENTER_YOUR_USER_NAME", password="ENTER_YOUR_PASSWORD",
+                       database="ENTER_YOUR_DATABASE_NAME", host="localhost")  # enter your database name and password to access it.
 mycursor = msg_db.cursor()
 
 # signUp window act as top most window in the project but it will shown only when a user have to sign up to start the conversation.
 signUpWindow = tkinter.Tk()
-signUpWindow.title('Login')
+signUpWindow.title('Sign Up')
 signUpWindow.geometry("500x500")
 signUpWindow.config(bg="white")
 signUpWindow.resizable(height=False, width=False)
@@ -93,7 +94,7 @@ def mainWindow():
     ChatBox.place(x=5, y=5)
 
     # for the initial purpose.
-    initialMsg = "Hi there, I am Wikibot. You can ask me anything. Tell me, what you want to search?"
+    initialMsg = "Hi there, I am Wikipedia Chatbot. You can ask me anything. Tell me, what you want to search?"
     mycursor.execute("""delete from MsgStore""")
     msg_db.commit()
     ChatBox.insert("end", "Bot: " + initialMsg)
@@ -184,7 +185,7 @@ def mainWindow():
         # window that shows history of all chats.
         historyWindow = Toplevel(root)
         root.withdraw()
-        historyWindow.title("History")
+        historyWindow.title("{} - History".format(userEmailAddress))
         historyWindow.geometry("1000x800")
         historyWindow.config(bg="white")
         historyWindow.resizable(height=False, width=False)
@@ -239,8 +240,7 @@ def mainWindow():
         def clearButtonListener():
             answer = messagebox.askyesno("Clear", "Sure?")
             if answer == True:
-                mycursor.execute(""" delete from MsgStoreHistory where sender = "{}" """.format(userEmailAddress))
-                mycursor.execute(""" delete from MsgStoreHistory where sender = "{}" """.format('bot' + userEmailAddress))
+                mycursor.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress,'bot' + userEmailAddress))
                 msg_db.commit()
                 historyList.delete(0, "end")
                 messagebox.showinfo("Clear", "All the chat history has been deleted.")
@@ -367,6 +367,15 @@ def mainWindow():
 
         changePasswordWindow.protocol("WM_DELETE_WINDOW", on_closing)
 
+    # deletes the current user and all the chats.
+    def deleteAccount():
+        mycursor.execute(""" delete from LoginTable where emailAddress = "{}" """.format(userEmailAddress))
+        mycursor.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress, 'bot' + userEmailAddress))
+        msg_db.commit()
+        messagebox.showinfo(title="Delete",message="Account has been deleted.")
+        root.withdraw()
+        signUpWindow.deiconify()
+
     # menu bar for chat window
     menubar = Menu(root, bg="white")
     options = Menu(menubar, tearoff=0, bg="white")
@@ -375,9 +384,10 @@ def mainWindow():
     options.add_separator()
     options.add_command(label="Export Chats.", command=exportChats)
     options.add_separator()
-    options.add_command(label="Sign Out", command=signout)
-    options.add_separator()
     options.add_command(label="Change Password", command=changePassword)
+    options.add_command(label="Delete Account", command=deleteAccount)
+    options.add_separator()
+    options.add_command(label="Sign Out", command=signout)
     root.config(menu=menubar)
 
     # calls when user exits from the chat window.
@@ -409,25 +419,40 @@ keep_me_signed_checkBox = Checkbutton(
     signUpWindow, text='Keep me signed up.', variable=keep_me_signed, onvalue=True, offvalue=False, bg='white')
 keep_me_signed_checkBox.place(x=100, y=325)
 
+
+# for validating an Email 
+def isValidEmail(email):  
+    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    if(re.search(regex,email)):  
+        return True  
+    else:  
+        return False
+
+
 # calls when user invkoes the signup button.
 def signUpButtonListener(event=None):
     if emailEntryBox.get() != '' and passwordEntryBox.get() != '':
-        global userEmailAddress
-        userEmailAddress = emailEntryBox.get()
-        mycursor.execute(""" select password from LoginTable where emailAddress = "{}" """.format(userEmailAddress))
-        try:
-            password = mycursor.fetchall()[0][0]
-        except IndexError:
-            pass
-        if keep_me_signed.get() == True:
-            mycursor.execute(""" update LoginTable set remembered = 1 where emailAddress = "{}" """.format(userEmailAddress))
-            msg_db.commit()
-        if password == passwordEntryBox.get():
-            mainWindow()
+        if isValidEmail(emailEntryBox.get()):
+            global userEmailAddress
+            userEmailAddress = emailEntryBox.get()
+            mycursor.execute(""" select password from LoginTable where emailAddress = "{}" """.format(userEmailAddress))
+            password = None
+            try:
+                password = mycursor.fetchall()[0][0]
+            except IndexError:
+                messagebox.showerror(title="Error", message='User not exists.')
+                return
+            if keep_me_signed.get() == True:
+                mycursor.execute(""" update LoginTable set remembered = 1 where emailAddress = "{}" """.format(userEmailAddress))
+                msg_db.commit()
+            if password == passwordEntryBox.get():
+                mainWindow()
+            else:
+                messagebox.showerror(title="Error", message='Wrong Password. Please try again.')
+            emailEntryBox.delete(0, 'end')
+            passwordEntryBox.delete(0, 'end')
         else:
-            messagebox.showerror(title="Error", message='Wrong Password. Please try again.')
-        emailEntryBox.delete(0, 'end')
-        passwordEntryBox.delete(0, 'end')
+            messagebox.showerror(title='Error', message='Invalid Email Address.')
     else:
         messagebox.showerror(title='Error', message='Empty Input Fields.')
 
@@ -464,16 +489,18 @@ def createAccountButtonListener():
 
     # calls when user invokes create account button of this window.
     def createAccount(event=None):
-        print(emailEntryBox.get())
         try:
             if emailEntryBox.get() != '' and passwordEntryBox.get() != '':
-                mycursor.execute(""" insert into LoginTable  values("{}", "{}", 0) """.format(emailEntryBox.get(), passwordEntryBox.get()))
-                msg_db.commit()
-                messagebox.showinfo(title='Account', message='Account Created.')
-                emailEntryBox.delete(0, 'end')
-                passwordEntryBox.delete(0, 'end')
-                createAccountWindow.withdraw()
-                signUpWindow.deiconify()
+                if isValidEmail(emailEntryBox.get()):
+                    mycursor.execute(""" insert into LoginTable  values("{}", "{}", 0) """.format(emailEntryBox.get(), passwordEntryBox.get()))
+                    msg_db.commit()
+                    messagebox.showinfo(title='Account', message='Account Created.')
+                    emailEntryBox.delete(0, 'end')
+                    passwordEntryBox.delete(0, 'end')
+                    createAccountWindow.withdraw()
+                    signUpWindow.deiconify()
+                else:
+                    messagebox.showerror(title='Error', message='Invalid Email Address.')        
             else:
                 messagebox.showerror(title='Error', message='Empty input fiedls.')    
         except mycon.errors.IntegrityError :
