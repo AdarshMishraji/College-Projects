@@ -14,9 +14,15 @@ import sys
 import re 
 sys.path.append('Project/Wikipedia Chatbot')
 
+# enter your user name, password, database name and host to access it.
+mysqluser = "ENTER-YOUR-USERNAME"
+mysqlpassword = "ENTER-YOUR-PASSWORD"
+mysqldatabase = "ENTER-YOUR-DATABASE NAME"
+mysqlhost = "ENTER-YOUR-HOST"
+
 # establish mysql connection. (BEFORE RUNNING THIS FILE. PLEASE RUN "msg_db.py" FILE)
-msg_db = mycon.connect(user="ENTER_YOUR_USER_NAME", password="ENTER_YOUR_PASSWORD",
-                       database="ENTER_YOUR_DATABASE_NAME", host="localhost")  # enter your database name and password to access it.
+msg_db = mycon.connect(user=mysqluser, password=mysqlpassword,
+                       database=mysqldatabase, host=mysqlhost) 
 mycursor = msg_db.cursor()
 
 # signUp window act as top most window in the project but it will shown only when a user have to sign up to start the conversation.
@@ -73,7 +79,7 @@ def mainWindow():
     # inserts the given parameter to the database.
 
     def insertIntoDatabase(table, sender, message):
-        mycursor.execute("""insert into {} (date, sender, message) value(now(3), "{}", "{}")""".format(
+        mycursor.execute("""insert into {} (date, sender, message) value(now(5), "{}", "{}")""".format(
             table, sender, message))
         msg_db.commit()
 
@@ -298,10 +304,14 @@ def mainWindow():
 
     # calls when sign out invokes
     def signout():
-        mycursor.execute(""" update LoginTable set remembered = 0  where emailAddress = "{}" """.format(userEmailAddress))
-        msg_db.commit()
-        root.withdraw()
-        signUpWindow.deiconify()
+        answer = messagebox.askyesno("Sign Out", "Sure?")
+        if answer == True:
+            mycursor.execute(""" update SignUpTable set remembered = 0  where emailAddress = "{}" """.format(userEmailAddress))
+            msg_db.commit()
+            root.withdraw()
+            signUpWindow.deiconify()
+        else:
+            pass
 
     # invokes when click on change password from menu bar
     def changePassword():
@@ -338,11 +348,11 @@ def mainWindow():
 
         # calls when user invokes chnage password button
         def changePasswordButtonListenener(event=None):
-            mycursor.execute(""" select password from LoginTable where emailAddress = "{}" """.format(userEmailAddress))
+            mycursor.execute(""" select password from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
             password = mycursor.fetchall()[0][0]
             if password == oldPasswordEntryBox.get():
                 if newPasswordEntryBox.get() == confirmNewPasswordEntryBox.get():
-                    mycursor.execute(""" update LoginTable set password = "{}" where emailAddress = "{}" """.format(newPasswordEntryBox.get(), userEmailAddress))
+                    mycursor.execute(""" update SignUpTable set password = "{}" where emailAddress = "{}" """.format(newPasswordEntryBox.get(), userEmailAddress))
                     msg_db.commit()
                     messagebox.showinfo(title="Password", message='Password has been changed.')   
                     oldPasswordEntryBox.delete(0, 'end') 
@@ -369,12 +379,16 @@ def mainWindow():
 
     # deletes the current user and all the chats.
     def deleteAccount():
-        mycursor.execute(""" delete from LoginTable where emailAddress = "{}" """.format(userEmailAddress))
-        mycursor.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress, 'bot' + userEmailAddress))
-        msg_db.commit()
-        messagebox.showinfo(title="Delete",message="Account has been deleted.")
-        root.withdraw()
-        signUpWindow.deiconify()
+        answer = messagebox.askyesno("Delete", "Sure?")
+        if answer == True:
+            mycursor.execute(""" delete from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
+            mycursor.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress, 'bot' + userEmailAddress))
+            msg_db.commit()
+            messagebox.showinfo(title="Delete",message="Account has been deleted.")
+            root.withdraw()
+            signUpWindow.deiconify()
+        else:
+            pass
 
     # menu bar for chat window
     menubar = Menu(root, bg="white")
@@ -415,8 +429,7 @@ passwordEntryBox.place(x=200, y=280)
 
 # checkbox for Remember me.
 keep_me_signed = BooleanVar()
-keep_me_signed_checkBox = Checkbutton(
-    signUpWindow, text='Keep me signed up.', variable=keep_me_signed, onvalue=True, offvalue=False, bg='white')
+keep_me_signed_checkBox = Checkbutton(signUpWindow, text='Keep me signed up.', variable=keep_me_signed, onvalue=True, offvalue=False, bg='white')
 keep_me_signed_checkBox.place(x=100, y=325)
 
 
@@ -435,7 +448,7 @@ def signUpButtonListener(event=None):
         if isValidEmail(emailEntryBox.get()):
             global userEmailAddress
             userEmailAddress = emailEntryBox.get()
-            mycursor.execute(""" select password from LoginTable where emailAddress = "{}" """.format(userEmailAddress))
+            mycursor.execute(""" select password from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
             password = None
             try:
                 password = mycursor.fetchall()[0][0]
@@ -443,7 +456,7 @@ def signUpButtonListener(event=None):
                 messagebox.showerror(title="Error", message='User not exists.')
                 return
             if keep_me_signed.get() == True:
-                mycursor.execute(""" update LoginTable set remembered = 1 where emailAddress = "{}" """.format(userEmailAddress))
+                mycursor.execute(""" update SignUpTable set remembered = 1 where emailAddress = "{}" """.format(userEmailAddress))
                 msg_db.commit()
             if password == passwordEntryBox.get():
                 mainWindow()
@@ -477,28 +490,37 @@ def createAccountButtonListener():
 
     # label and entry box for email
     emailLabel = Label(createAccountWindow, text='Email', bg='white')
-    emailLabel.place(x=100, y=250)
+    emailLabel.place(x=80, y=250)
     emailEntryBox = Entry(createAccountWindow)
-    emailEntryBox.place(x=200, y=250)
+    emailEntryBox.place(x=250, y=250)
 
     # label and entry box for password.
     passwordLabel = Label(createAccountWindow, text='Password', bg='white')
-    passwordLabel.place(x=100, y=280)
+    passwordLabel.place(x=80, y=280)
     passwordEntryBox = Entry(createAccountWindow, show='*')
-    passwordEntryBox.place(x=200, y=280)
+    passwordEntryBox.place(x=250, y=280)
+
+    # confirn new password label and entry box.
+    confirmPasswordLabel = Label(createAccountWindow, text='Confirm Password', bg='white')
+    confirmPasswordLabel.place(x=80, y=310)
+    confirmPasswordEntryBox = Entry(createAccountWindow, show='*')
+    confirmPasswordEntryBox.place(x=250, y=310)
 
     # calls when user invokes create account button of this window.
     def createAccount(event=None):
         try:
             if emailEntryBox.get() != '' and passwordEntryBox.get() != '':
                 if isValidEmail(emailEntryBox.get()):
-                    mycursor.execute(""" insert into LoginTable  values("{}", "{}", 0) """.format(emailEntryBox.get(), passwordEntryBox.get()))
-                    msg_db.commit()
-                    messagebox.showinfo(title='Account', message='Account Created.')
-                    emailEntryBox.delete(0, 'end')
-                    passwordEntryBox.delete(0, 'end')
-                    createAccountWindow.withdraw()
-                    signUpWindow.deiconify()
+                    if passwordEntryBox.get() == confirmPasswordEntryBox.get():
+                        mycursor.execute(""" insert into SignUpTable  values("{}", "{}", 0) """.format(emailEntryBox.get(), passwordEntryBox.get()))
+                        msg_db.commit()
+                        messagebox.showinfo(title='Account', message='Account has been created.')
+                        emailEntryBox.delete(0, 'end')
+                        passwordEntryBox.delete(0, 'end')
+                        createAccountWindow.withdraw()
+                        signUpWindow.deiconify()
+                    else:
+                        messagebox.showerror(title="Error", message='Password should be same as confirm password.')    
                 else:
                     messagebox.showerror(title='Error', message='Invalid Email Address.')        
             else:
@@ -508,7 +530,7 @@ def createAccountButtonListener():
 
     # loading and using create account image for create account button.
     create_account_button = Button(createAccountWindow, image=create_account_button_image, command=createAccount)
-    create_account_button.place(x=180, y=375)
+    create_account_button.place(x=180, y=370)
     createAccountWindow.bind('<Return>', createAccount)
 
     # calls when user exits from the create account window.
@@ -523,7 +545,7 @@ def createAccountButtonListener():
 create_account_button = Button(image=create_account_button_image, command=createAccountButtonListener)
 create_account_button.place(x=250, y=375)
 
-mycursor.execute(""" select emailAddress from LoginTable where remembered = 1 """)
+mycursor.execute(""" select emailAddress from SignUpTable where remembered = 1 """)
 emails = mycursor.fetchall()
 if emails != []:
     userEmailAddress = emails[0][0]
