@@ -13,7 +13,7 @@ cursor = msg_db.cursor()
 cursor.execute("""
                     create table SignUpTable(
 	                        emailAddress varchar(50), 
-	                        password varchar(32),
+	                        password varchar(32) not null,
                             remembered boolean default 0,
                             primary key (emailAddress)
                     )
@@ -22,7 +22,7 @@ cursor.execute("""
 cursor.execute("""
                     create table MsgStoreHistory(
                             date varchar(25), 
-	                        sender varchar(50),
+	                        sender varchar(50) not null,
 	                        message varchar(1000),
                             primary key(date)
                     )
@@ -31,7 +31,7 @@ cursor.execute("""
 cursor.execute("""
                     create table MsgStore(
 	                        date varchar(25), 
-	                        sender varchar(50),
+	                        sender varchar(50) not null,
 	                        message varchar(1000),
                             primary key(date)
                     )
