@@ -5,31 +5,24 @@ import Response  # importing local file to get the response
 import tkinter
 from tkinter import BooleanVar, Button, Entry, Frame, IntVar, Listbox, Menu, Scrollbar, Text, Toplevel, messagebox, Label, Checkbutton
 from PIL import ImageTk, Image
-import mysql.connector as mycon
+import sqlite3 as sql
 from datetime import datetime
 import wikipedia
 import nltk
 from sys import platform
 import sys
 import re 
+from tkinter.ttk import Combobox
 sys.path.append('Project/Wikipedia Chatbot')
 
-# enter your user name, password, database name and host to access it.
-mysqluser = "ENTER-YOUR-USERNAME"
-mysqlpassword = "ENTER-YOUR-PASSWORD"
-mysqldatabase = "ENTER-YOUR-DATABASE NAME"
-mysqlhost = "ENTER-YOUR-HOST"
-
-# establish mysql connection. (BEFORE RUNNING THIS FILE. PLEASE RUN "msg_db.py" FILE)
-msg_db = mycon.connect(user=mysqluser, password=mysqlpassword,
-                       database=mysqldatabase, host=mysqlhost) 
-mycursor = msg_db.cursor()
+# making sqlite3 connection to msg_db.db database.
+con = sql.connect('msg_db.db')
 
 # signUp window act as top most window in the project but it will shown only when a user have to sign up to start the conversation.
 signUpWindow = tkinter.Tk()
 signUpWindow.title('Sign Up')
 signUpWindow.geometry("500x500")
-signUpWindow.config(bg="white")
+signUpWindow.config(bg="#ccffcc")
 signUpWindow.resizable(height=False, width=False)
 
 # these are the global bariables.
@@ -37,40 +30,38 @@ userEmailAddress = None
 stringToSpeak = None
 
 # image for logo
-logo_image = Image.open("Project/Wikipedia Chatbot/images/Wikipedia Chatbot Logo.png")
+logo_image = Image.open("images/Wikipedia Chatbot Logo.png")
 logo_image = logo_image.resize((400, 200), Image.ANTIALIAS)
 logo_image = ImageTk.PhotoImage(logo_image)
 
 # image for the clear button   
-clear_button_image = Image.open("Project/Wikipedia Chatbot/images/clear.png")
+clear_button_image = Image.open("images/clear.png")
 clear_button_image = clear_button_image.resize((50, 47), Image.ANTIALIAS)
 clear_button_image = ImageTk.PhotoImage(clear_button_image)
 
 # image for the mic_button 
-mic_button_image = Image.open("Project/Wikipedia Chatbot/images/mic.png")
+mic_button_image = Image.open("images/mic.png")
 mic_button_image = mic_button_image.resize((50, 47), Image.ANTIALIAS)
 mic_button_image = ImageTk.PhotoImage(mic_button_image)
 
 # image for send button 
-send_button_image = Image.open("Project/Wikipedia Chatbot/images/send.png")
+send_button_image = Image.open("images/send.png")
 send_button_image = send_button_image.resize((50, 47), Image.ANTIALIAS)
 send_button_image = ImageTk.PhotoImage(send_button_image)
 
 # image for change password button
-change_password_button_image = Image.open("Project/Wikipedia Chatbot/images/change password.png")
+change_password_button_image = Image.open("images/change password.png")
 change_password_button_image = change_password_button_image.resize((150, 50), Image.ANTIALIAS)
 change_password_button_image = ImageTk.PhotoImage(change_password_button_image)
 
 # image for signup button
-sign_up_button_image = Image.open("Project/Wikipedia Chatbot/images/signUp.png")
+sign_up_button_image = Image.open("images/signUp.png")
 sign_up_button_image = sign_up_button_image.resize((150, 50), Image.ANTIALIAS)
 sign_up_button_image = ImageTk.PhotoImage(sign_up_button_image)
 
 # image for create account
-create_account_button_image = Image.open(
-    "Project/Wikipedia Chatbot/images/create-account.png")
-create_account_button_image = create_account_button_image.resize(
-    (150, 50), Image.ANTIALIAS)
+create_account_button_image = Image.open("images/create-account.png")
+create_account_button_image = create_account_button_image.resize((150, 50), Image.ANTIALIAS)
 create_account_button_image = ImageTk.PhotoImage(create_account_button_image)
 
 # main window. Opened only when user enter correct sign up details
@@ -78,10 +69,16 @@ def mainWindow():
     signUpWindow.withdraw()
     # inserts the given parameter to the database.
 
+    # this temporary table is used to store the messages of the chat window.
+    con.execute(""" CREATE TEMP TABLE "MsgStore" (
+	                    "time"	TEXT,
+                    	"sender"	TEXT NOT NULL,
+	                    "message"	TEXT DEFAULT '',
+	                    PRIMARY KEY("time") ) """)
+
     def insertIntoDatabase(table, sender, message):
-        mycursor.execute("""insert into {} (date, sender, message) value(now(5), "{}", "{}")""".format(
-            table, sender, message))
-        msg_db.commit()
+        con.execute("""insert into {} values (strftime("%Y-%m-%d%H:%M:%f", "now"), "{}", "{}")""".format(table, sender, message))
+        con.commit()
 
     # disables the mic_button when user types anything in the EntryBox.
     def entryFocusInHandler(event=None):
@@ -91,30 +88,35 @@ def mainWindow():
     root = Toplevel(signUpWindow)
     root.title("{} - Wikipedia Chatbot".format(userEmailAddress))
     root.geometry("1000x800")
-    root.config(bg="white")
+    root.config(bg="#ccffcc")
     root.resizable(height=False, width=False)
 
-    # listbox which displays the chats between the user and the bot.
-    ChatBox = Listbox(root, height=35, width=96,
-                      foreground="#446665", font=("Verdana", 12), borderwidth=5)
-    ChatBox.place(x=5, y=5)
+    no_of_linesLabel = Label(root, text="No. of lines:", bg='#ccffcc')
+    no_of_linesLabel.place(x=5, y=5)
+    no_of_lines = IntVar()
+    ComboBox = Combobox(root, textvariable=no_of_lines, width=5, justify='left')
+    ComboBox['values']=(1,2,3,4,5)
+    ComboBox.set(2)
+    ComboBox.place(x=100, y=5)
 
-    # for the initial purpose.
-    initialMsg = "Hi there, I am Wikipedia Chatbot. You can ask me anything. Tell me, what you want to search?"
-    mycursor.execute("""delete from MsgStore""")
-    msg_db.commit()
-    ChatBox.insert("end", "Bot: " + initialMsg)
-    ChatBox.itemconfig('end', {'fg': 'green'})
-    insertIntoDatabase("MsgStore", "bot" + userEmailAddress, initialMsg)
-    insertIntoDatabase("MsgStoreHistory", "bot" + userEmailAddress, initialMsg)
+    # listbox which displays the chats between the user and the bot.
+    ChatBox = Listbox(root, height=34, width=96, background="#ccffcc", foreground="#446665", font=("Verdana", 12), borderwidth=5)
+    ChatBox.place(x=5, y=30)
+
+    def listbox_copy(event):
+        root.clipboard_clear()
+        selected = ChatBox.get("anchor")
+        root.clipboard_append(selected)
+
+    ChatBox.bind('<Double-Button-1>', listbox_copy)
 
     # scrollbars for ChatBox.
     scrollbary = Scrollbar(root, command=ChatBox.yview)
     ChatBox['yscrollcommand'] = scrollbary.set
-    scrollbary.place(x=980, y=8, height=720)
-    scrollbary.config(bg="white")
+    scrollbary.place(x=980, y=30, height=690)
+    scrollbary.config(bg="#ccffcc")
     scrollbarx = Scrollbar(root, command=ChatBox.xview, orient="horizontal")
-    scrollbarx.config(bg="white")
+    scrollbarx.config(bg="#ccffcc")
     ChatBox['xscrollcommand'] = scrollbarx.set
     scrollbarx.place(x=8, y=725, width=975)
 
@@ -123,7 +125,7 @@ def mainWindow():
     tempFrame.place(x=0, y=0)
 
     # EntryBox for user input.
-    EntryBox = Entry(root, bd=0, bg="white",
+    EntryBox = Entry(root, bd=0, bg="#ccffcc",
                      font="Arial", relief="ridge", borderwidth=5)
     EntryBox.place(x=68, y=740, height=55, width=810)
     EntryBox.bind("<Key>", entryFocusInHandler)
@@ -133,15 +135,15 @@ def mainWindow():
         answer = messagebox.askyesno("Clear", "Sure?")
         if answer == True:
             command = """ delete from MsgStore """
-            mycursor.execute(command)
-            msg_db.commit()
+            con.execute(command)
+            con.commit()
             ChatBox.delete(0, "end")
             messagebox.showinfo("Clear", "All chats has been cleared.")
         else:
             pass
 
     # clear button (Clear the chats from the chatbox and delete the chats from the MsgStore)
-    clear_button = Button(root, image=clear_button_image, bg="white", borderwidth=0, command=clearButtonListener)
+    clear_button = Button(root, image=clear_button_image, bg="#ccffcc", borderwidth=0, command=clearButtonListener)
     clear_button.place(x=8, y=740)
 
     # listens the user input when user clicks on mic_button. (Invokes when mic_button invokes)
@@ -154,7 +156,7 @@ def mainWindow():
         listenAndSpeak.speak(stringToSpeak)
 
     # mic button (When invkokes listens to user's speech)
-    mic_button = Button(root, image=mic_button_image, bg="white", borderwidth=0, padx=2, pady=2, command=micButtonListener)
+    mic_button = Button(root, image=mic_button_image, bg="#ccffcc", borderwidth=0, padx=2, pady=2, command=micButtonListener)
     mic_button.place(x=935, y=740, height=50, width=60)
     mic_button.bind('')
 
@@ -166,7 +168,7 @@ def mainWindow():
         ChatBox.insert("end", "You: " + userInput)
         ChatBox.itemconfig('end', {'fg': 'blue'})
         root.update_idletasks()
-        response = Response.getResponse(userInput)
+        response = Response.getResponse(userInput, no_of_lines.get())
         print(response)
         ChatBox.insert("end", "Bot: " + response)
         ChatBox.itemconfig('end', {'fg': 'green'})
@@ -182,7 +184,7 @@ def mainWindow():
         stringToSpeak = response
 
     # send button (sends the message to the chatbox)        
-    send_button = Button(root, image=send_button_image, bg="white", borderwidth=0, command=sendButtonListener)
+    send_button = Button(root, image=send_button_image, bg="#ccffcc", borderwidth=0, command=sendButtonListener)
     root.bind('<Return>', sendButtonListener)
     send_button.place(x=880, y=740)
 
@@ -193,23 +195,30 @@ def mainWindow():
         root.withdraw()
         historyWindow.title("{} - History".format(userEmailAddress))
         historyWindow.geometry("1000x800")
-        historyWindow.config(bg="white")
+        historyWindow.config(bg="#ccffcc")
         historyWindow.resizable(height=False, width=False)
 
-        historyList = Listbox(historyWindow, height=35, width=96,foreground="#446665", font=("Verdana", 12), borderwidth=5, )
+        historyList = Listbox(historyWindow, height=35, width=96, bg="#ccffcc", foreground="#446665", font=("Verdana", 12), borderwidth=5, )
         historyList.place(x=10, y=10)
+
+        def listbox_copy(event):
+            historyWindow.clipboard_clear()
+            selected = historyList.get("anchor")
+            historyWindow.clipboard_append(selected)
+
+        historyList.bind('<Double-Button-1>', listbox_copy)
 
         scrollbary = Scrollbar(historyWindow, command=historyList.yview)
         historyList['yscrollcommand'] = scrollbary.set
         scrollbary.place(x=985, y=10, height=720)
-        scrollbary.config(bg="white")
+        scrollbary.config(bg="#ccffcc")
 
         scrollbarx = Scrollbar(historyWindow, command=historyList.xview, orient="horizontal")
         historyList['xscrollcommand'] = scrollbarx.set
         scrollbarx.place(x=10, y=725, width=980)
-        scrollbarx.config(bg="white")
+        scrollbarx.config(bg="#ccffcc")
 
-        mycursor.execute(""" select * from MsgStoreHistory """)
+        mycursor = con.execute(""" select * from MsgStoreHistory """)
         histories = mycursor.fetchall()
         i = 1
         try:
@@ -246,8 +255,8 @@ def mainWindow():
         def clearButtonListener():
             answer = messagebox.askyesno("Clear", "Sure?")
             if answer == True:
-                mycursor.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress,'bot' + userEmailAddress))
-                msg_db.commit()
+                con.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress,'bot' + userEmailAddress))
+                con.commit()
                 historyList.delete(0, "end")
                 messagebox.showinfo("Clear", "All the chat history has been deleted.")
             else:
@@ -255,14 +264,14 @@ def mainWindow():
 
         # loading and using clear button image
         clearButton = Button(
-            historyWindow, image=clear_button_image, bg="white", borderwidth=0, command=clearButtonListener)
+            historyWindow, image=clear_button_image, bg="#ccffcc", borderwidth=0, command=clearButtonListener)
         clearButton.place(x=8, y=740)
 
         # exports the chats to a file appended with current time. (Invokes when 'export chats history' invoke in menu bar of this particular window.)
         def exportChats():
             time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             textFile = open("Project/Wikipedia Chatbot/Histories/{}-chatHistories({}).txt".format(userEmailAddress, time), 'w')
-            mycursor.execute(""" select * from MsgStoreHistory """)
+            mycursor = con.execute(""" select * from MsgStoreHistory """)
             messages = mycursor.fetchall()
             for message in messages:
                 if message[1] == userEmailAddress:
@@ -278,8 +287,8 @@ def mainWindow():
             historyWindow.withdraw()
 
         # menu bar for history window
-        menubar = Menu(historyWindow, bg="white")
-        options = Menu(menubar, tearoff=0, bg="white")
+        menubar = Menu(historyWindow, bg="#ccffcc")
+        options = Menu(menubar, tearoff=0, bg="#ccffcc")
         menubar.add_cascade(label="Options", menu=options)
         options.add_command(label="Export Chat History", command=exportChats)
         options.add_separator()
@@ -292,7 +301,7 @@ def mainWindow():
     def exportChats():
         time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         textFile = open("Project/Wikipedia Chatbot/Chats/{}-chats-({}).txt".format(userEmailAddress, time), 'w')
-        mycursor.execute(""" select * from MsgStore """)
+        mycursor = con.execute(""" select * from MsgStoreHistory """)
         messages = mycursor.fetchall()
         for message in messages:
             if message[1] == userEmailAddress:
@@ -306,10 +315,12 @@ def mainWindow():
     def signout():
         answer = messagebox.askyesno("Sign Out", "Sure?")
         if answer == True:
-            mycursor.execute(""" update SignUpTable set remembered = 0  where emailAddress = "{}" """.format(userEmailAddress))
-            msg_db.commit()
+            con.execute(""" update SignUpTable set keep_me_signed_in = 0  where emailAddress = "{}" """.format(userEmailAddress))
+            con.commit()
             root.withdraw()
             signUpWindow.deiconify()
+            con.execute(""" drop table MsgStore """)
+            con.commit()
         else:
             pass
 
@@ -321,39 +332,39 @@ def mainWindow():
         root.withdraw()
         changePasswordWindow.title("Change Password")
         changePasswordWindow.geometry("500x500")
-        changePasswordWindow.config(bg="white")
+        changePasswordWindow.config(bg="#ccffcc")
         changePasswordWindow.resizable(height=False, width=False)
 
         # loading and using logo image
-        logo = Label(changePasswordWindow, image=logo_image, bg='white')
+        logo = Label(changePasswordWindow, image=logo_image, bg='#ccffcc')
         logo.place(x=50, y=10)
 
         # old password label and entry box.
-        oldPasswordLabel= Label(changePasswordWindow, text='Old Password', bg='white')
+        oldPasswordLabel= Label(changePasswordWindow, text='Old Password', bg='#ccffcc')
         oldPasswordLabel.place(x=80, y=250)
         oldPasswordEntryBox = Entry(changePasswordWindow, show='*')
         oldPasswordEntryBox.place(x=250, y=250)
 
         # new password label and entry box.
-        newPasswordLabel = Label(changePasswordWindow, text='Password', bg='white')
+        newPasswordLabel = Label(changePasswordWindow, text='Password', bg='#ccffcc')
         newPasswordLabel.place(x=80, y=290)
         newPasswordEntryBox = Entry(changePasswordWindow, show='*')
         newPasswordEntryBox.place(x=250, y=290)
 
         # confirn new password label and entry box.
-        confirmNewPasswordLabel = Label(changePasswordWindow, text='Confirm Password', bg='white')
+        confirmNewPasswordLabel = Label(changePasswordWindow, text='Confirm Password', bg='#ccffcc')
         confirmNewPasswordLabel.place(x=80, y=330)
         confirmNewPasswordEntryBox = Entry(changePasswordWindow, show='*')
         confirmNewPasswordEntryBox.place(x=250, y=330)
 
         # calls when user invokes chnage password button
         def changePasswordButtonListenener(event=None):
-            mycursor.execute(""" select password from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
+            mycursor = con.execute(""" select password from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
             password = mycursor.fetchall()[0][0]
             if password == oldPasswordEntryBox.get():
                 if newPasswordEntryBox.get() == confirmNewPasswordEntryBox.get():
-                    mycursor.execute(""" update SignUpTable set password = "{}" where emailAddress = "{}" """.format(newPasswordEntryBox.get(), userEmailAddress))
-                    msg_db.commit()
+                    con.execute(""" update SignUpTable set password = "{}" where emailAddress = "{}" """.format(newPasswordEntryBox.get(), userEmailAddress))
+                    con.commit()
                     messagebox.showinfo(title="Password", message='Password has been changed.')   
                     oldPasswordEntryBox.delete(0, 'end') 
                     newPasswordEntryBox.delete(0, 'end') 
@@ -381,18 +392,20 @@ def mainWindow():
     def deleteAccount():
         answer = messagebox.askyesno("Delete", "Sure?")
         if answer == True:
-            mycursor.execute(""" delete from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
-            mycursor.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress, 'bot' + userEmailAddress))
-            msg_db.commit()
+            con.execute(""" delete from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
+            con.execute(""" delete from MsgStoreHistory where sender in ("{}", "{}") """.format(userEmailAddress, 'bot' + userEmailAddress))
+            con.commit()
             messagebox.showinfo(title="Delete",message="Account has been deleted.")
             root.withdraw()
             signUpWindow.deiconify()
+            con.execute(""" drop table MsgStore """)
+            con.commit()
         else:
             pass
 
     # menu bar for chat window
-    menubar = Menu(root, bg="white")
-    options = Menu(menubar, tearoff=0, bg="white")
+    menubar = Menu(root, bg="#ccffcc")
+    options = Menu(menubar, tearoff=0, bg="#ccffcc")
     menubar.add_cascade(label="Options", menu=options)
     options.add_command(label="History", command=historyTab)
     options.add_separator()
@@ -408,28 +421,30 @@ def mainWindow():
     def on_closing():
         root.withdraw()
         signUpWindow.destroy()
+        con.execute(""" drop table MsgStore """)
+        con.commit()
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
 
 # loading and using logo image
-logo = Label(signUpWindow, image=logo_image, bg='white')
+logo = Label(signUpWindow, image=logo_image, bg='#ccffcc')
 logo.place(x=50, y=10)
 
 # label and entry box for email
-emailLabel = Label(signUpWindow, text='Email', bg='white')
+emailLabel = Label(signUpWindow, text='Email', bg='#ccffcc')
 emailLabel.place(x=100, y=250)
 emailEntryBox = Entry(signUpWindow)
 emailEntryBox.place(x=200, y=250)
 
 # label and entry box for password.
-passwordLabel = Label(signUpWindow, text='Password', bg='white')
+passwordLabel = Label(signUpWindow, text='Password', bg='#ccffcc')
 passwordLabel.place(x=100, y=280)
 passwordEntryBox = Entry(signUpWindow, show='*')
 passwordEntryBox.place(x=200, y=280)
 
 # checkbox for Remember me.
 keep_me_signed = BooleanVar()
-keep_me_signed_checkBox = Checkbutton(signUpWindow, text='Keep me signed up.', variable=keep_me_signed, onvalue=True, offvalue=False, bg='white')
+keep_me_signed_checkBox = Checkbutton(signUpWindow, text='Keep me signed up.', variable=keep_me_signed, onvalue=True, offvalue=False, bg='#ccffcc')
 keep_me_signed_checkBox.place(x=100, y=325)
 
 
@@ -448,7 +463,7 @@ def signUpButtonListener(event=None):
         if isValidEmail(emailEntryBox.get()):
             global userEmailAddress
             userEmailAddress = emailEntryBox.get()
-            mycursor.execute(""" select password from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
+            mycursor = con.execute(""" select password from SignUpTable where emailAddress = "{}" """.format(userEmailAddress))
             password = None
             try:
                 password = mycursor.fetchall()[0][0]
@@ -456,8 +471,8 @@ def signUpButtonListener(event=None):
                 messagebox.showerror(title="Error", message='User not exists.')
                 return
             if keep_me_signed.get() == True:
-                mycursor.execute(""" update SignUpTable set remembered = 1 where emailAddress = "{}" """.format(userEmailAddress))
-                msg_db.commit()
+                con.execute(""" update SignUpTable set keep_me_signed_in = 1 where emailAddress = "{}" """.format(userEmailAddress))
+                con.commit()
             if password == passwordEntryBox.get():
                 mainWindow()
             else:
@@ -470,7 +485,7 @@ def signUpButtonListener(event=None):
         messagebox.showerror(title='Error', message='Empty Input Fields.')
 
 # loading and using sign up image for sign up button.
-sign_up_button = Button(image=sign_up_button_image,command=signUpButtonListener, bg='white')
+sign_up_button = Button(image=sign_up_button_image,command=signUpButtonListener, bg='#ccffcc', borderwidth=0)
 sign_up_button.place(x=80, y=375)
 signUpWindow.bind('<Return>', signUpButtonListener)
 
@@ -480,28 +495,28 @@ def createAccountButtonListener():
     createAccountWindow = Toplevel(signUpWindow)
     createAccountWindow.title("Create Account")
     createAccountWindow.geometry("500x500")
-    createAccountWindow.config(bg="white")
+    createAccountWindow.config(bg="#ccffcc")
     createAccountWindow.resizable(height=False, width=False)
     signUpWindow.withdraw()
 
     # loading and using logo image.
-    logo = Label(createAccountWindow, image=logo_image, bg='white')
+    logo = Label(createAccountWindow, image=logo_image, bg='#ccffcc')
     logo.place(x=50, y=10)
 
     # label and entry box for email
-    emailLabel = Label(createAccountWindow, text='Email', bg='white')
+    emailLabel = Label(createAccountWindow, text='Email', bg='#ccffcc')
     emailLabel.place(x=80, y=250)
     emailEntryBox = Entry(createAccountWindow)
     emailEntryBox.place(x=250, y=250)
 
     # label and entry box for password.
-    passwordLabel = Label(createAccountWindow, text='Password', bg='white')
+    passwordLabel = Label(createAccountWindow, text='Password', bg='#ccffcc')
     passwordLabel.place(x=80, y=280)
     passwordEntryBox = Entry(createAccountWindow, show='*')
     passwordEntryBox.place(x=250, y=280)
 
     # confirn new password label and entry box.
-    confirmPasswordLabel = Label(createAccountWindow, text='Confirm Password', bg='white')
+    confirmPasswordLabel = Label(createAccountWindow, text='Confirm Password', bg='#ccffcc')
     confirmPasswordLabel.place(x=80, y=310)
     confirmPasswordEntryBox = Entry(createAccountWindow, show='*')
     confirmPasswordEntryBox.place(x=250, y=310)
@@ -512,8 +527,8 @@ def createAccountButtonListener():
             if emailEntryBox.get() != '' and passwordEntryBox.get() != '':
                 if isValidEmail(emailEntryBox.get()):
                     if passwordEntryBox.get() == confirmPasswordEntryBox.get():
-                        mycursor.execute(""" insert into SignUpTable  values("{}", "{}", 0) """.format(emailEntryBox.get(), passwordEntryBox.get()))
-                        msg_db.commit()
+                        con.execute(""" insert into SignUpTable  values("{}", "{}", 0) """.format(emailEntryBox.get(), passwordEntryBox.get()))
+                        con.commit()
                         messagebox.showinfo(title='Account', message='Account has been created.')
                         emailEntryBox.delete(0, 'end')
                         passwordEntryBox.delete(0, 'end')
@@ -525,11 +540,11 @@ def createAccountButtonListener():
                     messagebox.showerror(title='Error', message='Invalid Email Address.')        
             else:
                 messagebox.showerror(title='Error', message='Empty input fiedls.')    
-        except mycon.errors.IntegrityError :
+        except Exception:
             messagebox.showerror(title='Error', message='User Already Existed.')
 
     # loading and using create account image for create account button.
-    create_account_button = Button(createAccountWindow, image=create_account_button_image, command=createAccount)
+    create_account_button = Button(createAccountWindow, image=create_account_button_image, command=createAccount, borderwidth=0)
     create_account_button.place(x=180, y=370)
     createAccountWindow.bind('<Return>', createAccount)
 
@@ -542,10 +557,11 @@ def createAccountButtonListener():
 
 
 # loading and using create accout image for create account button.
-create_account_button = Button(image=create_account_button_image, command=createAccountButtonListener)
+create_account_button = Button(image=create_account_button_image, command=createAccountButtonListener, borderwidth=0)
 create_account_button.place(x=250, y=375)
 
-mycursor.execute(""" select emailAddress from SignUpTable where remembered = 1 """)
+# functionality for keep me signed in.
+mycursor = con.execute(""" select emailAddress from SignUpTable where keep_me_signed_in = 1 """)
 emails = mycursor.fetchall()
 if emails != []:
     userEmailAddress = emails[0][0]

@@ -14,18 +14,16 @@ def speak(string):
 def takeUserSpeech(): 
     userSpeech = speech_recognition.Recognizer()
     with speech_recognition.Microphone() as audio_source:
-        userSpeech.adjust_for_ambient_noise(audio_source)
-        speak("I'am Listening")
-        print("I'am Listening...")
-        userSpeech.pause_threshold = 2
-        audio = userSpeech.listen(audio_source, phrase_time_limit = 4)
+        userSpeech.adjust_for_ambient_noise(audio_source, 2)
+        speak("Tell me, I'am listening")
+        userSpeech.pause_threshold = 3
+        audio = userSpeech.listen(audio_source, phrase_time_limit = 5)
 
         try:
             userSpeech = userSpeech.recognize_google(audio, language = 'en-in')
-            print(userSpeech)
         except Exception:
             speak("Pardon me, please say that again")
             return
     return userSpeech
 
-engine.setProperty('rate', 125)
+engine.setProperty('rate', 150)
