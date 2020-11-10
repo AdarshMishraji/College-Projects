@@ -9,6 +9,7 @@ voices = engine.getProperty('voices')
 def speak(string): 
     engine.say(string)
     engine.runAndWait()
+    
 
 # takes user speech and convert it to string (Speech-to-Text)
 def takeUserSpeech(): 
@@ -22,8 +23,8 @@ def takeUserSpeech():
         try:
             userSpeech = userSpeech.recognize_google(audio, language = 'en-in')
         except Exception:
-            speak("Pardon me, please say that again")
+            speak("Pardon me, please say that again.")
             return
     return userSpeech
 
-engine.setProperty('rate', 150)
+engine.setProperty('rate', 130)

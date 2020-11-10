@@ -11,9 +11,26 @@ import wikipedia
 import nltk
 from sys import platform
 import sys
-import re 
+import re
+import os.path
 from tkinter.ttk import Combobox
 sys.path.append('Project/Wikipedia Chatbot')
+
+if not os.path.exists('msg_db.db'):
+    con = sql.connect('msg_db.db')
+    con.execute(""" CREATE TABLE "MsgStoreHistory" (
+	"time"	TEXT,
+	"sender"	TEXT NOT NULL,
+	"message"	TEXT DEFAULT '',
+	PRIMARY KEY("time")
+    ) """) # this table is used for storing all chats (History).
+
+    con.execute(""" CREATE TABLE "SignUpTable" (
+	"emailAddress"	TEXT,
+	"password"	TEXT NOT NULL,
+	"keep_me_signed_in"	INTEGER DEFAULT 0,
+	PRIMARY KEY("emailAddress")
+    ) """) # this table stores the login details
 
 # making sqlite3 connection to msg_db.db database.
 con = sql.connect('msg_db.db')
@@ -64,6 +81,16 @@ create_account_button_image = Image.open("images/create-account.png")
 create_account_button_image = create_account_button_image.resize((150, 50), Image.ANTIALIAS)
 create_account_button_image = ImageTk.PhotoImage(create_account_button_image)
 
+# image for show password
+show_password = Image.open("images/show password.png")
+show_password = show_password.resize((25, 25), Image.ANTIALIAS)
+show_password = ImageTk.PhotoImage(show_password)
+
+# image for not show password
+not_show_password = Image.open("images/not show password.png")
+not_show_password = not_show_password.resize((25, 25), Image.ANTIALIAS)
+not_show_password = ImageTk.PhotoImage(not_show_password)
+
 # main window. Opened only when user enter correct sign up details
 def mainWindow():
     signUpWindow.withdraw()
@@ -77,7 +104,7 @@ def mainWindow():
 	                    PRIMARY KEY("time") ) """)
 
     def insertIntoDatabase(table, sender, message):
-        con.execute("""insert into {} values (strftime("%Y-%m-%d%H:%M:%f", "now"), "{}", "{}")""".format(table, sender, message))
+        con.execute("""insert into {} values ("{}", "{}", "{}")""".format(table, datetime.now(), sender, message))
         con.commit()
 
     # disables the mic_button when user types anything in the EntryBox.
@@ -100,25 +127,18 @@ def mainWindow():
     ComboBox.place(x=100, y=5)
 
     # listbox which displays the chats between the user and the bot.
-    ChatBox = Listbox(root, height=34, width=96, background="#ccffcc", foreground="#446665", font=("Verdana", 12), borderwidth=5)
+    ChatBox = Listbox(root, height=36, width=96, background="#ccffcc", foreground="#446665", font=("Verdana", 12), borderwidth=5)
     ChatBox.place(x=5, y=30)
-
-    def listbox_copy(event):
-        root.clipboard_clear()
-        selected = ChatBox.get("anchor")
-        root.clipboard_append(selected)
-
-    ChatBox.bind('<Double-Button-1>', listbox_copy)
 
     # scrollbars for ChatBox.
     scrollbary = Scrollbar(root, command=ChatBox.yview)
     ChatBox['yscrollcommand'] = scrollbary.set
     scrollbary.place(x=980, y=30, height=690)
     scrollbary.config(bg="#ccffcc")
-    scrollbarx = Scrollbar(root, command=ChatBox.xview, orient="horizontal")
-    scrollbarx.config(bg="#ccffcc")
-    ChatBox['xscrollcommand'] = scrollbarx.set
-    scrollbarx.place(x=8, y=725, width=975)
+    #scrollbarx = Scrollbar(root, command=ChatBox.xview, orient="horizontal")
+    #scrollbarx.config(bg="#ccffcc")
+    #ChatBox['xscrollcommand'] = scrollbarx.set
+    #scrollbarx.place(x=8, y=725, width=975)
 
     # used to switching focus. (This widget will no display on the screen)
     tempFrame = Frame(root, height=0, width=0)
@@ -154,7 +174,7 @@ def mainWindow():
         EntryBox.insert(0, text)
         sendButtonListener()
         listenAndSpeak.speak(stringToSpeak)
-
+	    
     # mic button (When invkokes listens to user's speech)
     mic_button = Button(root, image=mic_button_image, bg="#ccffcc", borderwidth=0, padx=2, pady=2, command=micButtonListener)
     mic_button.place(x=935, y=740, height=50, width=60)
@@ -164,24 +184,35 @@ def mainWindow():
     def sendButtonListener(event=None):
         EntryBox.bind("<Return>", lambda event: tempFrame.focus_set())
         userInput = EntryBox.get()
-        print(userInput)
-        ChatBox.insert("end", "You: " + userInput)
-        ChatBox.itemconfig('end', {'fg': 'blue'})
-        root.update_idletasks()
-        response = Response.getResponse(userInput, no_of_lines.get())
-        print(response)
-        ChatBox.insert("end", "Bot: " + response)
-        ChatBox.itemconfig('end', {'fg': 'green'})
-        ChatBox.config(foreground="#446665", font=("Verdana", 12))
-        root.update_idletasks()
-        mic_button.config(state='active')
-        insertIntoDatabase("MsgStore", userEmailAddress, userInput)
-        insertIntoDatabase("MsgStoreHistory", userEmailAddress, userInput)
-        insertIntoDatabase("MsgStore", "bot" + userEmailAddress, f"""{response}""")
-        insertIntoDatabase("MsgStoreHistory", "bot" + userEmailAddress, f"""{response}""")
-        EntryBox.delete(0, 'end')
-        global stringToSpeak
-        stringToSpeak = response
+        if len(userInput) != 0:
+            ChatBox.insert("end", "You: " + userInput)
+            ChatBox.itemconfig('end', {'fg': 'blue'})
+            root.update_idletasks()
+            responseList = Response.getResponse(userInput, no_of_lines.get())
+            ChatBox.insert("end", "Bot: " + responseList[0])
+            ChatBox.itemconfig('end', {'fg': 'green'})
+            ChatBox.config(foreground="#446665", font=("Verdana", 12))
+            root.update_idletasks()
+            signUpWindow.update_idletasks()
+            for response in responseList[1:]:
+                ChatBox.insert("end", "       " + response)
+                ChatBox.itemconfig('end', {'fg': 'green'})
+                ChatBox.config(foreground="#446665", font=("Verdana", 12))
+                root.update_idletasks()
+                signUpWindow.update_idletasks()
+            root.update_idletasks()
+            signUpWindow.update_idletasks()
+            mic_button.config(state='active')
+            response = "".join(responseList)
+            insertIntoDatabase("MsgStore", userEmailAddress, userInput)
+            insertIntoDatabase("MsgStoreHistory", userEmailAddress, userInput)
+            insertIntoDatabase("MsgStore", "bot" + userEmailAddress, response)
+            insertIntoDatabase("MsgStoreHistory", "bot" + userEmailAddress, response)
+            EntryBox.delete(0, 'end')
+            global stringToSpeak
+            stringToSpeak = response
+        else:
+            return
 
     # send button (sends the message to the chatbox)        
     send_button = Button(root, image=send_button_image, bg="#ccffcc", borderwidth=0, command=sendButtonListener)
@@ -198,25 +229,30 @@ def mainWindow():
         historyWindow.config(bg="#ccffcc")
         historyWindow.resizable(height=False, width=False)
 
-        historyList = Listbox(historyWindow, height=35, width=96, bg="#ccffcc", foreground="#446665", font=("Verdana", 12), borderwidth=5, )
+        historyList = Listbox(historyWindow, height=37, width=96, bg="#ccffcc", foreground="#446665", font=("Verdana", 12), borderwidth=5, )
         historyList.place(x=10, y=10)
 
-        def listbox_copy(event):
-            historyWindow.clipboard_clear()
-            selected = historyList.get("anchor")
-            historyWindow.clipboard_append(selected)
-
-        historyList.bind('<Double-Button-1>', listbox_copy)
+        def returnList(text):
+            responseList = []
+            i = 0
+            while i < len(text):
+                if len(text) - i > 87:
+                    responseList.append(text[i:i + 87] + '-')
+                    i = i + 87
+                else:
+                    responseList.append(text[i:])
+                    break
+            return responseList
 
         scrollbary = Scrollbar(historyWindow, command=historyList.yview)
         historyList['yscrollcommand'] = scrollbary.set
         scrollbary.place(x=985, y=10, height=720)
         scrollbary.config(bg="#ccffcc")
 
-        scrollbarx = Scrollbar(historyWindow, command=historyList.xview, orient="horizontal")
-        historyList['xscrollcommand'] = scrollbarx.set
-        scrollbarx.place(x=10, y=725, width=980)
-        scrollbarx.config(bg="#ccffcc")
+        #scrollbarx = Scrollbar(historyWindow, command=historyList.xview, orient="horizontal")
+        #historyList['xscrollcommand'] = scrollbarx.set
+        #scrollbarx.place(x=10, y=725, width=980)
+        #scrollbarx.config(bg="#ccffcc")
 
         mycursor = con.execute(""" select * from MsgStoreHistory """)
         histories = mycursor.fetchall()
@@ -241,12 +277,20 @@ def mainWindow():
                 else:
                     pass
                 if chats[1] == userEmailAddress:
-                    historyList.insert(i, chatsTime + " : You: " + chats[2])
-                    historyList.itemconfig(i-1, {'fg': 'blue'})
+                    textList = returnList(chats[2])
+                    historyList.insert("end", chatsTime + " : You: " + textList[0])
+                    historyList.itemconfig("end", {'fg': 'blue'})
+                    for response in textList[1:]:
+                        historyList.insert("end", "                            " + response)
+                        historyList.itemconfig("end", {'fg': 'blue'})
                     i += 1
                 elif chats[1] == "bot" + userEmailAddress:
-                    historyList.insert(i, chatsTime + " : Bot: " + chats[2])
-                    historyList.itemconfig(i-1, {'fg': 'green'})
+                    textList = returnList(chats[2])
+                    historyList.insert("end", chatsTime + " : Bot: " + textList[0])
+                    historyList.itemconfig("end", {'fg': 'green'})
+                    for response in textList[1:]:
+                        historyList.insert("end", "                                 " + response)
+                        historyList.itemconfig("end", {'fg': 'green'})
                     i += 1
         except IndexError:
             pass
@@ -269,8 +313,8 @@ def mainWindow():
 
         # exports the chats to a file appended with current time. (Invokes when 'export chats history' invoke in menu bar of this particular window.)
         def exportChats():
-            time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            textFile = open("Project/Wikipedia Chatbot/Histories/{}-chatHistories({}).txt".format(userEmailAddress, time), 'w')
+            timestr = str(datetime.now())
+            textFile = open("Histories/{}_chatHistories_{}.txt".format(userEmailAddress, '_'.join([timestr[:4], timestr[5:7], timestr[8:10], timestr[11:13], timestr[14:16], timestr[17:19]])), 'w')
             mycursor = con.execute(""" select * from MsgStoreHistory """)
             messages = mycursor.fetchall()
             for message in messages:
@@ -279,7 +323,7 @@ def mainWindow():
                 elif message[1] == 'bot' + userEmailAddress:
                     textFile.write(str(message[0]) + " => Bot:" + message[2] + '\n')
             textFile.close()
-            messagebox.showinfo("Export", """ Chats has been exported to "chatsHistory({}).txt" file """.format(time))
+            messagebox.showinfo("Export", """ Chats has been exported to "{}_chatsHistory_{}.txt" file """.format(userEmailAddress, '_'.join([timestr[:4], timestr[5:7], timestr[8:10], timestr[11:13], timestr[14:16], timestr[17:19]])))
 
         # calks when user exits from the history window.
         def exitWindow():
@@ -299,8 +343,8 @@ def mainWindow():
 
     # exports chats to a file appended with current time. (Invokes when 'exports chats' invokes in menubar of root.)
     def exportChats():
-        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        textFile = open("Project/Wikipedia Chatbot/Chats/{}-chats-({}).txt".format(userEmailAddress, time), 'w')
+        time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        textFile = open("Chats/{}_chats_{}.txt".format(userEmailAddress, time), 'w')
         mycursor = con.execute(""" select * from MsgStoreHistory """)
         messages = mycursor.fetchall()
         for message in messages:
@@ -309,7 +353,7 @@ def mainWindow():
             elif message[1] == 'bot' + userEmailAddress:
                 textFile.write(str(message[0]) + " => Bot:" + message[2] + '\n')
         textFile.close()
-        messagebox.showinfo("Export", """ Chats has been exported to "{}-chats-({}).txt" file """.format(userEmailAddress, time))
+        messagebox.showinfo("Export", """ Chats has been exported to "{}_chats_{}.txt" file """.format(userEmailAddress, time))
 
     # calls when sign out invokes
     def signout():
@@ -377,7 +421,7 @@ def mainWindow():
                 messagebox.showerror(title="Error", message='Wrong old password.')
 
         # loading and using chnage password image
-        change_password_button = Button(changePasswordWindow, image=change_password_button_image, command=changePasswordButtonListenener)
+        change_password_button = Button(changePasswordWindow, image=change_password_button_image, command=changePasswordButtonListenener, borderwidth=0)
         change_password_button.place(x=180, y=400)
         changePasswordWindow.bind('<Return>', changePasswordButtonListenener)
 
@@ -404,7 +448,7 @@ def mainWindow():
             pass
 
     # menu bar for chat window
-    menubar = Menu(root, bg="#ccffcc")
+    menubar = Menu(root, bg="#000000")
     options = Menu(menubar, tearoff=0, bg="#ccffcc")
     menubar.add_cascade(label="Options", menu=options)
     options.add_command(label="History", command=historyTab)
@@ -433,20 +477,40 @@ logo.place(x=50, y=10)
 # label and entry box for email
 emailLabel = Label(signUpWindow, text='Email', bg='#ccffcc')
 emailLabel.place(x=100, y=250)
-emailEntryBox = Entry(signUpWindow)
+emailEntryBox = Entry(signUpWindow, width=30)
 emailEntryBox.place(x=200, y=250)
-
+    
 # label and entry box for password.
 passwordLabel = Label(signUpWindow, text='Password', bg='#ccffcc')
 passwordLabel.place(x=100, y=280)
-passwordEntryBox = Entry(signUpWindow, show='*')
+passwordEntryBox = Entry(signUpWindow, show='*', width=30)
 passwordEntryBox.place(x=200, y=280)
 
-# checkbox for Remember me.
+# checkbox for keep me signed .
 keep_me_signed = BooleanVar()
 keep_me_signed_checkBox = Checkbutton(signUpWindow, text='Keep me signed up.', variable=keep_me_signed, onvalue=True, offvalue=False, bg='#ccffcc')
 keep_me_signed_checkBox.place(x=100, y=325)
 
+showPassword = False
+
+password = Button(signUpWindow)
+def passwordHandler():
+    global showPassword
+    if showPassword == False:
+       password.config(image=show_password)
+       showPassword = True
+       passwordEntryBox.config(show='')
+    else:
+        password.config(image=not_show_password)
+        showPassword = False
+        passwordEntryBox.config(show='*')
+
+password.config(image=not_show_password, command=passwordHandler, bg='#ccffcc', borderwidth=0)
+    
+
+# button for show password.
+
+password.place(x=400, y=277)
 
 # for validating an Email 
 def isValidEmail(email):  
@@ -506,19 +570,19 @@ def createAccountButtonListener():
     # label and entry box for email
     emailLabel = Label(createAccountWindow, text='Email', bg='#ccffcc')
     emailLabel.place(x=80, y=250)
-    emailEntryBox = Entry(createAccountWindow)
+    emailEntryBox = Entry(createAccountWindow, width=30)
     emailEntryBox.place(x=250, y=250)
 
     # label and entry box for password.
     passwordLabel = Label(createAccountWindow, text='Password', bg='#ccffcc')
     passwordLabel.place(x=80, y=280)
-    passwordEntryBox = Entry(createAccountWindow, show='*')
+    passwordEntryBox = Entry(createAccountWindow, show='*', width=30)
     passwordEntryBox.place(x=250, y=280)
 
     # confirn new password label and entry box.
     confirmPasswordLabel = Label(createAccountWindow, text='Confirm Password', bg='#ccffcc')
     confirmPasswordLabel.place(x=80, y=310)
-    confirmPasswordEntryBox = Entry(createAccountWindow, show='*')
+    confirmPasswordEntryBox = Entry(createAccountWindow, show='*', width=30)
     confirmPasswordEntryBox.place(x=250, y=310)
 
     # calls when user invokes create account button of this window.
@@ -539,7 +603,7 @@ def createAccountButtonListener():
                 else:
                     messagebox.showerror(title='Error', message='Invalid Email Address.')        
             else:
-                messagebox.showerror(title='Error', message='Empty input fiedls.')    
+                messagebox.showerror(title='Error', message='Empty Input Fields.')    
         except Exception:
             messagebox.showerror(title='Error', message='User Already Existed.')
 
